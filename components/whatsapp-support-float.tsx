@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 
 const WHATSAPP_NUMBER = "5511992171188";
 const WHATSAPP_MESSAGE =
@@ -17,7 +17,7 @@ export function WhatsAppSupportFloat() {
       aria-label="Suporte via WhatsApp"
       className="fixed bottom-5 right-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-green-600/90 text-white shadow-lg shadow-green-700/30 transition hover:scale-[1.04] hover:bg-green-600"
     >
-      <MessageCircle className="h-6 w-6" />
+      <WhatsAppIcon className="h-6 w-6" />
     </a>
   );
 }

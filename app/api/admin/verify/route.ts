@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
   if (!adminPassword) {
     return NextResponse.json(
-      { ok: false, message: "Defina ADMIN_PASSWORD nas variaveis de ambiente." },
+      { ok: false, message: "Defina ADMIN_PASSWORD nas variáveis de ambiente." },
       { status: 500 },
     );
   }
@@ -17,11 +17,11 @@ export async function POST(request: Request) {
   const body = (await request.json()) as VerifyBody;
 
   if (!body.password) {
-    return NextResponse.json({ ok: false, message: "Senha obrigatoria." }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Senha obrigatória." }, { status: 400 });
   }
 
   if (body.password !== adminPassword) {
-    return NextResponse.json({ ok: false, message: "Senha invalida." }, { status: 401 });
+    return NextResponse.json({ ok: false, message: "Senha inválida." }, { status: 401 });
   }
 
   return NextResponse.json({ ok: true });

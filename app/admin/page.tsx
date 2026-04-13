@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Image from "next/image";
-import { Download, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, Download, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
@@ -16,6 +16,13 @@ type Inscrito = {
   check_in: boolean;
   created_at: string;
 };
+
+const METODOS_PAGAMENTO = [
+  { value: "pix", label: "Pix" },
+  { value: "cartao_credito", label: "Cartão de Crédito" },
+  { value: "boleto", label: "Boleto" },
+  { value: "dinheiro_outro", label: "Dinheiro/Outro" },
+] as const;
 
 const FIM_LOTE_1 = new Date(2026, 6, 21, 23, 59, 59, 999);
 
@@ -34,6 +41,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState("");
+  const [confirmacaoPagamento, setConfirmacaoPagamento] = useState<{
+    id: string;
+    nome: string;
+  } | null>(null);
+  const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState<
+    (typeof METODOS_PAGAMENTO)[number]["value"]
+  >(METODOS_PAGAMENTO[0].value);
 
   const carregarInscritos = async () => {
     if (!isSupabaseConfigured || !supabase) {
@@ -54,7 +68,7 @@ export default function AdminPage() {
     setLoading(false);
 
     if (error) {
-      setGlobalError("Nao foi possivel carregar as inscritas.");
+      setGlobalError("Não foi possível carregar as inscritas.");
       return;
     }
 
@@ -75,7 +89,7 @@ export default function AdminPage() {
   const totalInscritos = inscritos.length;
   const totalPagos = inscritos.filter((item) => item.status_pagamento === "pago").length;
   const totalPendentes = inscritos.filter((item) => item.status_pagamento !== "pago").length;
-  const expectativaArrecadacao = inscritos
+  const totalArrecadadoConfirmado = inscritos
     .filter((item) => item.status_pagamento === "pago")
     .reduce((acc, inscrita) => acc + getValorInscricao(inscrita.created_at), 0);
 
@@ -98,14 +112,14 @@ export default function AdminPage() {
     setAuthLoading(false);
 
     if (!response.ok) {
-      setAuthError("Nao foi possivel validar a senha.");
+      setAuthError("Não foi possível validar a senha.");
       return;
     }
 
     const body = (await response.json()) as { ok: boolean; message?: string };
 
     if (!body.ok) {
-      setAuthError(body.message ?? "Senha invalida.");
+      setAuthError(body.message ?? "Senha inválida.");
       return;
     }
 
@@ -124,8 +138,8 @@ export default function AdminPage() {
     setActionLoadingId(null);
 
     if (error) {
-      setGlobalError("Nao foi possivel atualizar a inscrita.");
-      toast.error("Nao foi possivel atualizar a inscrita.");
+      setGlobalError("Não foi possível atualizar a inscrita.");
+      toast.error("Não foi possível atualizar a inscrita.");
       return;
     }
 
@@ -133,21 +147,68 @@ export default function AdminPage() {
     await carregarInscritos();
   };
 
-  const atualizarStatusPagamento = async (id: string, statusAtual: string) => {
-    await atualizarInscrito(id, {
-      status_pagamento: statusAtual === "pago" ? "pendente" : "pago",
-    });
+  const abrirConfirmacaoPagamento = (id: string, nome: string) => {
+    setConfirmacaoPagamento({ id, nome });
+    setMetodoPagamentoSelecionado(METODOS_PAGAMENTO[0].value);
+  };
+
+  const confirmarPagamentoManual = async () => {
+    if (!supabase || !confirmacaoPagamento) return;
+
+    const { id } = confirmacaoPagamento;
+    const payloadBase = {
+      status_pagamento: "pago",
+      metodo_pagamento: metodoPagamentoSelecionado,
+    };
+
+    setActionLoadingId(id);
+    setGlobalError("");
+
+    let error = (
+      await supabase
+        .from("inscritos")
+        .update({
+          ...payloadBase,
+          data_pagamento: new Date().toISOString(),
+        } as never)
+        .eq("id", id)
+    ).error;
+
+    const colunaDataPagamentoInexistente =
+      error &&
+      (error.code === "42703" ||
+        error.message.toLowerCase().includes("data_pagamento") ||
+        error.message.toLowerCase().includes("column"));
+
+    if (colunaDataPagamentoInexistente) {
+      error = (await supabase.from("inscritos").update(payloadBase).eq("id", id)).error;
+    }
+
+    setActionLoadingId(null);
+
+    if (error) {
+      setGlobalError("Não foi possível confirmar o pagamento.");
+      toast.error(error.message || "Não foi possível confirmar o pagamento.");
+      return;
+    }
+
+    toast.success("Pagamento confirmado com sucesso.");
+    setConfirmacaoPagamento(null);
+    setMetodoPagamentoSelecionado(METODOS_PAGAMENTO[0].value);
+    await carregarInscritos();
   };
 
   const excluirInscrita = async (id: string, nome: string) => {
     if (!supabase) return;
 
     if (typeof id !== "string") {
-      toast.error("ID invalido para exclusao.");
+      toast.error("ID inválido para exclusão.");
       return;
     }
 
-    const confirmar = window.confirm(`Deseja excluir a inscrita "${nome}"? Esta acao nao pode ser desfeita.`);
+    const confirmar = window.confirm(
+      `Deseja excluir a inscrita "${nome}"? Esta ação não pode ser desfeita.`,
+    );
     if (!confirmar) return;
 
     setActionLoadingId(id);
@@ -158,8 +219,8 @@ export default function AdminPage() {
     setActionLoadingId(null);
 
     if (error) {
-      setGlobalError("Nao foi possivel excluir a inscrita.");
-      toast.error(error.message || "Nao foi possivel excluir a inscrita.");
+      setGlobalError("Não foi possível excluir a inscrita.");
+      toast.error(error.message || "Não foi possível excluir a inscrita.");
       return;
     }
 
@@ -173,7 +234,7 @@ export default function AdminPage() {
       "WhatsApp",
       "Email",
       "Status Pagamento",
-      "Metodo Pagamento",
+      "Método de Pagamento",
       "Check-in",
       "Data Cadastro",
     ];
@@ -184,7 +245,7 @@ export default function AdminPage() {
       inscrita.email,
       inscrita.status_pagamento,
       inscrita.metodo_pagamento ?? "",
-      inscrita.check_in ? "Sim" : "Nao",
+      inscrita.check_in ? "Sim" : "Não",
       new Date(inscrita.created_at).toLocaleString("pt-BR"),
     ]);
 
@@ -280,13 +341,14 @@ export default function AdminPage() {
             <p className="mt-1 text-2xl font-bold text-green-700">{totalPagos}</p>
           </article>
           <article className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
-            <p className="text-sm text-primary/70">Expectativa de Arrecadacao</p>
+            <p className="text-sm text-primary/70">Total Confirmado</p>
             <p className="mt-1 text-2xl font-bold text-secondary">
-              {expectativaArrecadacao.toLocaleString("pt-BR", {
+              {totalArrecadadoConfirmado.toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
               })}
             </p>
+            <p className="mt-1 text-xs text-primary/70">{totalPagos} pessoas pagas</p>
           </article>
         </section>
 
@@ -346,25 +408,28 @@ export default function AdminPage() {
                         {inscrito.status_pagamento}
                       </span>
                       <span className="rounded-full bg-secondary/20 px-2 py-1">
-                        {inscrito.metodo_pagamento ?? "sem metodo"}
+                        {inscrito.metodo_pagamento ?? "sem método"}
                       </span>
                       <span className="rounded-full bg-primary/10 px-2 py-1">
-                        Check-in: {inscrito.check_in ? "sim" : "nao"}
+                        Check-in: {inscrito.check_in ? "sim" : "não"}
                       </span>
                     </div>
                     <div className="mt-3 grid gap-2">
-                      <button
-                        type="button"
-                        disabled={actionLoadingId === inscrito.id}
-                        onClick={() => void atualizarStatusPagamento(inscrito.id, inscrito.status_pagamento)}
-                        className={`rounded-xl px-3 py-2 text-sm font-medium transition disabled:opacity-60 ${
-                          inscrito.status_pagamento === "pago"
-                            ? "border border-green-300 bg-green-50 text-green-800 hover:bg-green-100"
-                            : "border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
-                        }`}
-                      >
-                        Pagamento: {inscrito.status_pagamento === "pago" ? "Confirmado" : "Pendente"}
-                      </button>
+                      {inscrito.status_pagamento !== "pago" ? (
+                        <button
+                          type="button"
+                          disabled={actionLoadingId === inscrito.id}
+                          onClick={() => abrirConfirmacaoPagamento(inscrito.id, inscrito.nome)}
+                          className="flex items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-60"
+                        >
+                          <Check className="h-4 w-4" />
+                          Confirmar Pagamento
+                        </button>
+                      ) : (
+                        <span className="rounded-xl border border-green-300 bg-green-50 px-3 py-2 text-center text-sm font-medium text-green-800">
+                          Pagamento Confirmado
+                        </span>
+                      )}
                       <button
                         type="button"
                         disabled={actionLoadingId === inscrito.id || inscrito.check_in}
@@ -400,9 +465,9 @@ export default function AdminPage() {
                     <th className="px-4 py-3 font-semibold">WhatsApp</th>
                     <th className="px-4 py-3 font-semibold">Email</th>
                     <th className="px-4 py-3 font-semibold">Pagamento</th>
-                    <th className="px-4 py-3 font-semibold">Metodo</th>
+                    <th className="px-4 py-3 font-semibold">Método</th>
                     <th className="px-4 py-3 font-semibold">Check-in</th>
-                    <th className="px-4 py-3 font-semibold">Acoes</th>
+                    <th className="px-4 py-3 font-semibold">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -419,25 +484,31 @@ export default function AdminPage() {
                         <td className="px-4 py-3">{inscrito.whatsapp}</td>
                         <td className="px-4 py-3">{inscrito.email}</td>
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            disabled={actionLoadingId === inscrito.id}
-                            onClick={() =>
-                              void atualizarStatusPagamento(inscrito.id, inscrito.status_pagamento)
-                            }
-                            className={`rounded-full px-3 py-1 text-xs font-semibold transition disabled:opacity-60 ${
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
                               inscrito.status_pagamento === "pago"
-                                ? "bg-green-100 text-green-800 hover:bg-green-200"
-                                : "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-amber-100 text-amber-800"
                             }`}
                           >
                             {inscrito.status_pagamento === "pago" ? "Confirmado" : "Pendente"}
-                          </button>
+                          </span>
                         </td>
                         <td className="px-4 py-3">{inscrito.metodo_pagamento ?? "-"}</td>
-                        <td className="px-4 py-3">{inscrito.check_in ? "Sim" : "Nao"}</td>
+                        <td className="px-4 py-3">{inscrito.check_in ? "Sim" : "Não"}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2">
+                            {inscrito.status_pagamento !== "pago" && (
+                              <button
+                                type="button"
+                                disabled={actionLoadingId === inscrito.id}
+                                onClick={() => abrirConfirmacaoPagamento(inscrito.id, inscrito.nome)}
+                                className="flex items-center gap-1 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-60"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                                Confirmar
+                              </button>
+                            )}
                             <button
                               type="button"
                               disabled={actionLoadingId === inscrito.id || inscrito.check_in}
@@ -469,6 +540,56 @@ export default function AdminPage() {
           </>
         )}
       </section>
+
+      {confirmacaoPagamento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-primary/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-accent/70 bg-surface p-5 shadow-xl">
+            <h2 className="text-lg font-semibold">Confirmar pagamento de {confirmacaoPagamento.nome}?</h2>
+            <p className="mt-1 text-sm text-primary/75">
+              Selecione o método de pagamento para concluir a confirmação manual.
+            </p>
+
+            <div className="mt-4">
+              <label htmlFor="metodo-pagamento" className="mb-1 block text-sm font-medium text-primary">
+                Método de pagamento
+              </label>
+              <select
+                id="metodo-pagamento"
+                value={metodoPagamentoSelecionado}
+                onChange={(event) =>
+                  setMetodoPagamentoSelecionado(event.target.value as (typeof METODOS_PAGAMENTO)[number]["value"])
+                }
+                className="w-full rounded-xl border border-accent/70 bg-surface px-3 py-2.5 text-sm outline-none transition focus:border-primary"
+              >
+                {METODOS_PAGAMENTO.map((metodo) => (
+                  <option key={metodo.value} value={metodo.value}>
+                    {metodo.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmacaoPagamento(null)}
+                className="rounded-lg border border-accent/70 bg-surface px-4 py-2 text-sm font-medium transition hover:border-primary"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmarPagamentoManual()}
+                disabled={actionLoadingId === confirmacaoPagamento.id}
+                className="inline-flex items-center gap-2 rounded-lg bg-secondary px-4 py-2 text-sm font-semibold text-surface shadow-lg shadow-secondary/30 transition hover:scale-[1.02] disabled:opacity-60"
+              >
+                <Check className="h-4 w-4" />
+                {actionLoadingId === confirmacaoPagamento.id ? "Confirmando..." : "Confirmar pagamento"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

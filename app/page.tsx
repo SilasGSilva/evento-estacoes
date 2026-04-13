@@ -12,12 +12,28 @@ export const metadata: Metadata = {
 };
 
 const convidados = [
-  { nome: 'Elisama Leal', papel: 'Palestrante', imagem: '/elisama-leal.png' },
-  { nome: 'Cristina Ramos', papel: 'Cantora', imagem: '/cristina-ramos.png' },
+  {
+    nome: 'Elisama Leal',
+    papel: 'Palestrante',
+    imagem: '/elisama-leal.png',
+    bio: 'Missionária, teóloga, mentora, advogada, escritora e pregadora. Já viajou por diversos países anunciando o Evangelho e, hoje, ministra dentro e fora do Brasil. Fundadora do Café & Cura e da mentoria Mulheres Ungidas, carrega a missão de levantar mulheres curadas na raiz e firmadas em sua identidade como filhas de Deus.',
+  },
+  {
+    nome: 'Emily Leal',
+    papel: 'Palestrante',
+    imagem: '/emily-leal.png',
+    bio: 'Psicóloga, Mestra em Psicologia e MBA em Neurociências. Especialista em Terapia Cognitivo-Comportamental e docente em cursos de Medicina. Com mais de 9 anos de experiência clínica, dedica sua carreira ao estudo profundo da mente e do comportamento humano.',
+  },
+  {
+    nome: 'Cristina Ramos',
+    papel: 'Cantora',
+    imagem: '/cristina-ramos.png',
+    bio: 'Cantora convidada para conduzir o louvor e ministrar com sensibilidade e excelência neste tempo especial de adoração.',
+  },
 ];
 
 const MAPS_LINK =
-  'https://www.google.com/maps/search/?api=1&query=Av.%20Pinheirinho%20D%27Agua%2C%20200%20-%20Jd.%20Panamericano';
+  'https://www.google.com/maps/search/?api=1&query=Espaço+Merengue+Av+Pinheirinho+DAgua+200';
 
 const lideranca = [
   {
@@ -47,9 +63,12 @@ export default function HomePage() {
           delay={0.05}
         >
           <h2 className="text-2xl font-semibold md:text-3xl">Convidadas</h2>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {convidados.map(convidado => (
-              <article key={convidado.nome} className="text-center">
+              <article
+                key={convidado.nome}
+                className="flex h-full w-full max-w-sm flex-col rounded-2xl border border-accent/60 bg-surface/70 p-4 text-center shadow-sm transition-transform duration-200 hover:-translate-y-1"
+              >
                 <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
                   <Image
                     src={convidado.imagem}
@@ -60,6 +79,7 @@ export default function HomePage() {
                 </div>
                 <p className="mt-4 text-lg font-semibold text-primary">{convidado.nome}</p>
                 <p className="mt-1 text-sm text-primary/75">{convidado.papel}</p>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{convidado.bio}</p>
               </article>
             ))}
           </div>
@@ -95,17 +115,21 @@ export default function HomePage() {
               <CalendarDays className="h-5 w-5 text-secondary" />
               <span>21/08/2026 - 18h</span>
             </p>
-            <p className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-secondary" />
-              <a
-                href={MAPS_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-secondary/70 underline-offset-2 hover:text-surface"
-              >
-                Av. Pinheirinho D&apos;Agua, 200 - Jd. Panamericano
-              </a>
-            </p>
+            <div className="flex items-start gap-2">
+              <MapPin className="mt-0.5 h-5 w-5 text-secondary" />
+              <div className="space-y-1">
+                <p className="font-semibold text-surface">Espaço Merengue</p>
+                <p>Av. Pinheirinho D&apos;Água, 200 - Jd. Panamericano</p>
+                <a
+                  href={MAPS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-full border border-secondary/60 px-3 py-1 text-xs font-medium text-surface transition hover:bg-secondary/20"
+                >
+                  Ver no Google Maps
+                </a>
+              </div>
+            </div>
           </div>
           <div className="mt-6">
             <Countdown />

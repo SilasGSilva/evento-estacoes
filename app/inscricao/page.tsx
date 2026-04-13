@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +10,7 @@ import { CalendarDays, MapPin } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { AnimatedSection } from '@/components/animated-section';
 import { Hero } from '@/components/Hero';
+import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 
 const inscricaoSchema = z.object({
@@ -40,7 +42,28 @@ const LOTE_2: LoteAtual = {
 };
 
 const MAPS_LINK =
-  'https://www.google.com/maps/search/?api=1&query=Av.%20Pinheirinho%20D%27Agua%2C%20200%20-%20Jd.%20Panamericano';
+  'https://www.google.com/maps/search/?api=1&query=Espaço+Merengue+Av+Pinheirinho+DAgua+200';
+
+const CONVIDADAS = [
+  {
+    nome: 'Elisama Leal',
+    papel: 'Palestrante',
+    imagem: '/elisama-leal.png',
+    bio: 'Missionária, teóloga, mentora, advogada, escritora e pregadora. Já viajou por diversos países anunciando o Evangelho e, hoje, ministra dentro e fora do Brasil. Fundadora do Café & Cura e da mentoria Mulheres Ungidas, carrega a missão de levantar mulheres curadas na raiz e firmadas em sua identidade como filhas de Deus.',
+  },
+  {
+    nome: 'Emily Leal',
+    papel: 'Palestrante',
+    imagem: '/emily-leal.png',
+    bio: 'Psicóloga, Mestra em Psicologia e MBA em Neurociências. Especialista em Terapia Cognitivo-Comportamental e docente em cursos de Medicina. Com mais de 9 anos de experiência clínica, dedica sua carreira ao estudo profundo da mente e do comportamento humano.',
+  },
+  {
+    nome: 'Cristina Ramos',
+    papel: 'Cantora',
+    imagem: '/cristina-ramos.png',
+    bio: 'Cantora convidada para conduzir o louvor e ministrar com sensibilidade e excelência neste tempo especial de adoração.',
+  },
+];
 
 function getLoteAtual(now = new Date()): LoteAtual {
   const fimLote1 = new Date(2026, 6, 21, 23, 59, 59, 999);
@@ -62,6 +85,7 @@ function formatWhatsApp(value: string) {
 }
 
 export default function InscricaoPage() {
+  const router = useRouter();
   const [enviadoComSucesso, setEnviadoComSucesso] = useState(false);
   const [erroEnvio, setErroEnvio] = useState('');
   const [salvando, setSalvando] = useState(false);
@@ -113,6 +137,7 @@ export default function InscricaoPage() {
     }
 
     setEnviadoComSucesso(true);
+    router.push(`/obrigado?nome=${encodeURIComponent(data.nome)}`);
   };
 
   const handleIrPagamento = () => {
@@ -128,27 +153,25 @@ export default function InscricaoPage() {
       <section className="mx-auto w-full max-w-7xl space-y-8 px-4 py-12 sm:px-6 lg:px-8 md:space-y-10 md:py-24">
         <AnimatedSection className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md">
           <h2 className="text-center text-xl font-semibold text-primary">Convidadas</h2>
-          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <article className="text-center">
-              <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
-                <Image src="/elisama-leal.png" alt="Elisama Leal" fill className="object-cover object-center" />
-              </div>
-              <p className="mt-3 text-sm font-semibold">Elisama Leal</p>
-              <p className="text-xs text-primary/75">Palestrante</p>
-            </article>
-
-            <article className="text-center">
-              <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
-                <Image
-                  src="/cristina-ramos.png"
-                  alt="Cristina Ramos"
-                  fill
-                  className="object-cover object-center"
-                />
-              </div>
-              <p className="mt-3 text-sm font-semibold">Cristina Ramos</p>
-              <p className="text-xs text-primary/75">Cantora</p>
-            </article>
+          <div className="mt-5 grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {CONVIDADAS.map((convidada) => (
+              <article
+                key={convidada.nome}
+                className="flex h-full w-full max-w-sm flex-col rounded-2xl border border-accent/60 bg-surface/70 p-4 text-center shadow-sm transition-transform duration-200 hover:-translate-y-1"
+              >
+                <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
+                  <Image
+                    src={convidada.imagem}
+                    alt={convidada.nome}
+                    fill
+                    className="object-cover object-center"
+                  />
+                </div>
+                <p className="mt-3 text-sm font-semibold">{convidada.nome}</p>
+                <p className="text-xs text-primary/75">{convidada.papel}</p>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{convidada.bio}</p>
+              </article>
+            ))}
           </div>
 
           <div className="mt-6 space-y-3 rounded-2xl bg-surface p-4">
@@ -156,16 +179,20 @@ export default function InscricaoPage() {
               <CalendarDays className="h-5 w-5 text-secondary" />
               <span>21/08/2026 - 18h</span>
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <MapPin className="h-5 w-5 text-secondary" />
-              <a
-                href={MAPS_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-secondary/70 underline-offset-2 hover:text-primary/80"
-              >
-                Av. Pinheirinho D&apos;Agua, 200 - Jd. Panamericano
-              </a>
+            <div className="flex items-start gap-3 text-sm">
+              <MapPin className="mt-0.5 h-5 w-5 text-secondary" />
+              <div className="space-y-1">
+                <p className="font-semibold text-primary">Espaço Merengue</p>
+                <p className="text-primary/80">Av. Pinheirinho D&apos;Água, 200 - Jd. Panamericano</p>
+                <a
+                  href={MAPS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-full border border-secondary/60 px-3 py-1 text-xs font-medium text-primary transition hover:bg-secondary/10"
+                >
+                  Abrir no GPS
+                </a>
+              </div>
             </div>
           </div>
         </AnimatedSection>
@@ -200,7 +227,8 @@ export default function InscricaoPage() {
               </div>
 
               <div>
-                <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium text-primary">
+                <label htmlFor="whatsapp" className="mb-1 flex items-center gap-1 text-sm font-medium text-primary">
+                  <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                   WhatsApp
                 </label>
                 <input

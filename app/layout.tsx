@@ -18,14 +18,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
+  title: "Café & Cura - Estações 2026",
   description:
-    "Um tempo de renovo para o seu coração. Garanta sua vaga no evento ESTAÇÕES 2026.",
+    "Um encontro para mulheres curadas na raiz e firmadas em sua identidade",
   manifest: "/manifest.json",
   openGraph: {
-    title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
-    description:
-      "Um tempo de renovo para o seu coração. Garanta sua vaga para este evento especial para mulheres.",
+    title: "Café & Cura - Estações 2026",
+    description: "Um encontro para mulheres curadas na raiz e firmadas em sua identidade",
     type: "website",
     locale: "pt_BR",
     images: [
@@ -39,9 +38,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
-    description:
-      "Um tempo de renovo para o seu coração. Garanta sua vaga para este evento especial para mulheres.",
+    title: "Café & Cura - Estações 2026",
+    description: "Um encontro para mulheres curadas na raiz e firmadas em sua identidade",
     images: ["/hero-banner.png"],
   },
   formatDetection: {
@@ -82,6 +80,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <meta charSet="UTF-8" />
+      </head>
       <body className="relative flex min-h-full flex-col overflow-x-hidden bg-surface text-primary">
         <SeasonAtmosphere />
         <div className="relative z-10 flex min-h-full flex-col">{children}</div>
