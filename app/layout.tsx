@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import { PwaManifestDebug } from "@/components/pwa-manifest-debug";
 import { SeasonAtmosphere } from "@/components/season-atmosphere";
 import { WhatsAppSupportFloat } from "@/components/whatsapp-support-float";
@@ -17,21 +18,31 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
-  title: "Inscrição - ESTAÇÕES",
-  description: "PWA de inscrição para o evento ESTAÇÕES",
+  title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
+  description:
+    "Um tempo de renovo para o seu coração. Garanta sua vaga no evento ESTAÇÕES 2026.",
   manifest: "/manifest.json",
   openGraph: {
     title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
     description:
       "Um tempo de renovo para o seu coração. Garanta sua vaga para este evento especial para mulheres.",
-    images: [{ url: "/logo.png" }],
+    type: "website",
+    locale: "pt_BR",
+    images: [
+      {
+        url: "/hero-banner.png",
+        width: 1920,
+        height: 1080,
+        alt: "Banner oficial do evento ESTAÇÕES 2026",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "ESTAÇÕES 2026 | AD Jardim Shangri-la",
     description:
       "Um tempo de renovo para o seu coração. Garanta sua vaga para este evento especial para mulheres.",
-    images: ["/logo.png"],
+    images: ["/hero-banner.png"],
   },
   formatDetection: {
     telephone: false,
@@ -74,6 +85,7 @@ export default function RootLayout({
       <body className="relative flex min-h-full flex-col overflow-x-hidden bg-surface text-primary">
         <SeasonAtmosphere />
         <div className="relative z-10 flex min-h-full flex-col">{children}</div>
+        <Analytics />
         <WhatsAppSupportFloat />
         {process.env.NODE_ENV === "development" && <PwaManifestDebug />}
       </body>

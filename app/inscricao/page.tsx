@@ -184,7 +184,7 @@ export default function InscricaoPage() {
               <p className="text-2xl font-bold text-primary">{loteAtual.valor}</p>
             </div>
 
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)} aria-busy={salvando}>
               <div>
                 <label htmlFor="nome" className="mb-1 block text-sm font-medium text-primary">
                   Nome
@@ -238,13 +238,23 @@ export default function InscricaoPage() {
               </div>
 
               {erroEnvio && <p className="text-sm text-primary">{erroEnvio}</p>}
+              {salvando && (
+                <p className="text-sm text-primary/80">Estamos processando sua inscrição...</p>
+              )}
 
               <button
                 type="submit"
                 disabled={salvando}
                 className="w-full rounded-full bg-secondary px-5 py-3 font-semibold text-surface shadow-lg shadow-secondary/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {salvando ? 'Salvando...' : 'Próximo'}
+                {salvando ? (
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-surface/40 border-t-surface" />
+                    Enviando inscrição...
+                  </span>
+                ) : (
+                  'Próximo'
+                )}
               </button>
             </form>
           </AnimatedSection>
@@ -253,11 +263,10 @@ export default function InscricaoPage() {
             className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md"
             delay={0.05}
           >
-            <h3 className="text-lg font-semibold">Inscrição confirmada!</h3>
+            <h3 className="text-lg font-semibold">Inscrição recebida com sucesso! 🎉</h3>
             <p className="mt-1 text-sm text-primary/80">
-              Sua pré-inscrição foi realizada com sucesso! ✨ Agora, para garantir sua vaga, você
-              precisa concluir o pagamento. Clique no botão abaixo para ser redirecionada ao ambiente
-              seguro.
+              Obrigada por se inscrever no ESTAÇÕES. Para concluir sua participação, siga para o
+              pagamento no botão abaixo.
             </p>
             <div className="mt-4 rounded-2xl border border-secondary/40 bg-secondary/10 p-4 text-center">
               <p className="text-sm text-primary/80">Valor da inscrição</p>
@@ -272,7 +281,7 @@ export default function InscricaoPage() {
               Ir para o Pagamento
             </button>
             <p className="mt-3 text-center text-sm text-primary/70">
-              Você será redirecionado para o ambiente seguro de pagamento (PIX, Cartão ou Boleto).
+              Ao abrir a página de pagamento, finalize o processo para garantir sua vaga no evento.
             </p>
           </AnimatedSection>
         )}
