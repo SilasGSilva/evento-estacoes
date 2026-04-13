@@ -71,7 +71,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="relative min-h-full flex flex-col bg-surface text-primary">
+      <body className="relative flex min-h-full flex-col overflow-x-hidden bg-surface text-primary">
         <SeasonAtmosphere />
         <div className="relative z-10 flex min-h-full flex-col">{children}</div>
         <WhatsAppSupportFloat />

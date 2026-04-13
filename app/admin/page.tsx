@@ -153,13 +153,7 @@ export default function AdminPage() {
     setActionLoadingId(id);
     setGlobalError("");
 
-    // Se a operacao falhar com "403 Forbidden" ou "Policy Violation",
-    // revise as politicas RLS no Supabase para DELETE na tabela inscritos.
-    // SQL sugerido:
-    // ALTER TABLE inscritos ENABLE ROW LEVEL SECURITY;
-    // ...e crie policy especifica para DELETE do papel usado no app.
     const { error } = await supabase.from("inscritos").delete().eq("id", id);
-    console.log("Erro ao deletar:", error);
 
     setActionLoadingId(null);
 
@@ -209,7 +203,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen bg-transparent px-4 py-10 text-primary">
+      <main className="min-h-screen overflow-x-hidden bg-transparent px-4 py-12 text-primary sm:px-6 lg:px-8 md:py-20">
         <Toaster richColors position="top-center" />
         <section className="mx-auto w-full max-w-md rounded-2xl border border-accent/70 bg-surface p-6 shadow-md">
           <div className="mb-4 flex justify-center">
@@ -256,9 +250,9 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-6 text-primary">
+    <main className="min-h-screen overflow-x-hidden bg-transparent px-4 py-12 text-primary sm:px-6 lg:px-8 md:py-20">
       <Toaster richColors position="top-center" />
-      <section className="mx-auto w-full max-w-6xl space-y-4">
+      <section className="mx-auto w-full max-w-7xl space-y-6">
         <header className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
           <div className="mb-3 flex items-center gap-3">
             <Image
@@ -276,7 +270,7 @@ export default function AdminPage() {
           </p>
         </header>
 
-        <section className="grid gap-3 sm:grid-cols-3">
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
             <p className="text-sm text-primary/70">Total de Inscritas</p>
             <p className="mt-1 text-2xl font-bold">{totalInscritos}</p>

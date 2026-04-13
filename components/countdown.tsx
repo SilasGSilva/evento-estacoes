@@ -54,14 +54,14 @@ export function Countdown() {
 
   if (!isMounted) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mx-auto grid w-full grid-cols-4 gap-2 md:gap-4">
         {["Dias", "Horas", "Min", "Seg"].map((label) => (
           <div
             key={label}
-            className="rounded-2xl border border-secondary/40 bg-primary/70 p-4 text-center backdrop-blur-sm"
+            className="w-full rounded-2xl border border-secondary/40 bg-primary/70 p-2 text-center backdrop-blur-sm md:p-4"
           >
-            <p className="text-3xl font-bold text-secondary">00</p>
-            <p className="mt-1 text-xs uppercase tracking-wider text-white/80">{label}</p>
+            <p className="text-xl font-bold leading-none text-secondary md:text-4xl">00</p>
+            <p className="mt-1 text-[10px] uppercase tracking-wider text-white/80 md:text-xs">{label}</p>
           </div>
         ))}
       </div>
@@ -69,16 +69,20 @@ export function Countdown() {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="mx-auto grid w-full grid-cols-4 gap-2 md:gap-4">
       {items.map((item) => (
         <motion.div
           key={item.label}
-          className="rounded-2xl border border-secondary/40 bg-primary/70 p-4 text-center backdrop-blur-sm"
+          className="w-full rounded-2xl border border-secondary/40 bg-primary/70 p-2 text-center backdrop-blur-sm md:p-4"
           animate={{ y: [0, -2, 0] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
         >
-          <p className="text-3xl font-bold text-secondary">{String(item.value).padStart(2, "0")}</p>
-          <p className="mt-1 text-xs uppercase tracking-wider text-white/80">{item.label}</p>
+          <p className="text-xl font-bold leading-none text-secondary md:text-4xl">
+            {String(item.value).padStart(2, "0")}
+          </p>
+          <p className="mt-1 text-[10px] uppercase tracking-wider text-white/80 md:text-xs">
+            {item.label}
+          </p>
         </motion.div>
       ))}
     </div>

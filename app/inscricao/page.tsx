@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { AnimatedSection } from '@/components/animated-section';
+import { Hero } from '@/components/Hero';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 
 const inscricaoSchema = z.object({
@@ -104,12 +105,6 @@ export default function InscricaoPage() {
       .select('id,nome')
       .single();
 
-    if (error) {
-      console.log('Erro ao inserir inscrita:', error);
-    } else {
-      console.log('Inscrição salva com sucesso:', inscrita);
-    }
-
     setSalvando(false);
 
     if (error || !inscrita) {
@@ -126,34 +121,14 @@ export default function InscricaoPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-transparent text-primary">
+    <main className="relative min-h-screen overflow-x-hidden bg-transparent text-primary">
       <Toaster richColors position="top-center" />
-      <AnimatedSection className="bg-gradient-to-b from-primary to-secondary/70 px-4 py-12 text-center">
-        <div className="mx-auto mb-4 flex justify-center">
-          <Image
-            src="/logo.png"
-            alt="Logo AD Jardim Shangri-la"
-            width={52}
-            height={52}
-            className="h-[52px] w-[52px] rounded-full border border-accent/60 bg-surface/95 p-1"
-            priority
-          />
-        </div>
-        <p className="text-sm uppercase tracking-[0.25em] text-white/75">
-          Evento AD Belém - Jardim Shangri-la
-        </p>
-        <h1 className="mt-3 text-5xl font-semibold tracking-[0.12em] text-surface md:text-6xl">
-          INSCRIÇÃO
-        </h1>
-        <p className="mt-4 inline-block rounded-full border border-secondary/40 bg-white/10 px-4 py-1 text-sm font-medium text-surface">
-          Garanta sua vaga em ESTAÇÕES
-        </p>
-      </AnimatedSection>
+      <Hero showSignUpButton={false} />
 
-      <section className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8">
+      <section className="mx-auto w-full max-w-7xl space-y-8 px-4 py-12 sm:px-6 lg:px-8 md:space-y-10 md:py-24">
         <AnimatedSection className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md">
           <h2 className="text-center text-xl font-semibold text-primary">Convidadas</h2>
-          <div className="mt-5 grid grid-cols-2 gap-4">
+          <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <article className="text-center">
               <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
                 <Image src="/elisama-leal.png" alt="Elisama Leal" fill className="object-cover object-center" />

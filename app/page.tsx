@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { CalendarDays, MapPin } from 'lucide-react';
 import { AnimatedSection } from '@/components/animated-section';
 import { Countdown } from '@/components/countdown';
-import { PulseCtaLink } from '@/components/pulse-cta-link';
+import { Hero } from '@/components/Hero';
 
 export const metadata: Metadata = {
   title: 'ESTAÇÕES | AD Jardim Shangri-la',
@@ -31,46 +31,10 @@ const lideranca = [
 
 export default function HomePage() {
   return (
-    <main className="relative bg-transparent text-primary">
-      <AnimatedSection className="relative overflow-hidden bg-gradient-to-b from-primary to-secondary/70 px-4 py-16 text-center">
-        <div className="pointer-events-none absolute inset-0 opacity-30">
-          <div className="absolute left-[-20%] top-[-10%] h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
-          <div className="absolute bottom-[-20%] right-[-15%] h-80 w-80 rounded-full bg-white/20 blur-3xl" />
-        </div>
+    <main className="relative overflow-x-hidden bg-transparent text-primary">
+      <Hero showSignUpButton={true} />
 
-        <div className="relative mx-auto w-full max-w-4xl">
-          <div className="mx-auto mb-4 flex justify-center">
-            <Image
-              src="/logo.png"
-              alt="Logo AD Jardim Shangri-la"
-              width={52}
-              height={52}
-              className="h-[52px] w-[52px] rounded-full border border-accent/60 bg-surface/95 p-1"
-              priority
-            />
-          </div>
-          <p className="mb-3 text-sm uppercase tracking-[0.35em] text-white/75">
-            Evento AD Belém - Jardim Shangri-la
-          </p>
-          <h1 className="text-6xl font-semibold tracking-[0.18em] text-surface md:text-7xl">
-            ESTAÇÕES
-          </h1>
-          <p className="mx-auto mt-7 max-w-3xl text-sm leading-relaxed text-white/90 md:text-base">
-            Enquanto a terra durar, sementeira e sega, e frio e calor, e verão e inverno, e dia e
-            noite, não cessarão. (Gênesis 8:22)
-          </p>
-
-          <div className="mt-9">
-            <PulseCtaLink
-              href="/inscricao"
-              label="INSCREVA-SE PARA O EVENTO"
-              className="inline-flex rounded-full bg-secondary px-7 py-3 text-sm font-semibold tracking-wide text-surface transition hover:bg-secondary/90"
-            />
-          </div>
-        </div>
-      </AnimatedSection>
-
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10">
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-12 sm:px-6 lg:px-8 md:space-y-10 md:py-24">
         <AnimatedSection className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md md:p-8">
           <h2 className="text-2xl font-semibold text-primary md:text-3xl">Sobre o Tema</h2>
           <p className="mt-4 rounded-xl border-l-4 border-secondary bg-secondary/10 p-4 leading-relaxed text-primary/90 shadow-sm">
@@ -83,7 +47,7 @@ export default function HomePage() {
           delay={0.05}
         >
           <h2 className="text-2xl font-semibold md:text-3xl">Convidadas</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {convidados.map(convidado => (
               <article key={convidado.nome} className="text-center">
                 <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
@@ -106,7 +70,7 @@ export default function HomePage() {
           delay={0.1}
         >
           <h2 className="text-2xl font-semibold md:text-3xl">Nossa Liderança</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {lideranca.map(lider => (
               <article key={lider.nome} className="text-center">
                 <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">

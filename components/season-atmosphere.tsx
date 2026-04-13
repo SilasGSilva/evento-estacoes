@@ -17,7 +17,7 @@ const particles = Array.from({ length: 45 }, (_, index) => {
 
 export function SeasonAtmosphere() {
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
+    <div className="fixed inset-0 z-20 pointer-events-none overflow-hidden opacity-40">
       {particles.map((particle, index) => (
         <motion.span
           key={index}
