@@ -1,0 +1,33 @@
+INSTRUCOES DE VARIAVEIS DE AMBIENTE - VERCEL
+===========================================
+
+Cadastre as variaveis abaixo no painel da Vercel (Project > Settings > Environment Variables)
+para os ambientes desejados (Production, Preview e Development).
+
+1) NEXT_PUBLIC_SUPABASE_URL
+- URL do seu projeto Supabase.
+- Exemplo: https://xxxxx.supabase.co
+
+2) NEXT_PUBLIC_SUPABASE_ANON_KEY
+- Chave anon/publica do Supabase (nao usar service_role no frontend).
+
+3) ADMIN_PASSWORD
+- Senha de acesso da pagina administrativa /admin.
+- Esta variavel e validada no backend via rota /api/admin/verify.
+
+4) NEXT_PUBLIC_PIX_KEY
+- Chave PIX exibida na pagina de inscricao.
+- Exemplo: email, telefone, CPF/CNPJ ou chave aleatoria.
+
+5) NEXT_PUBLIC_MERCADO_PAGO_LINK
+- Link de pagamento de Cartao/Boleto (Mercado Pago).
+- Deve ser URL completa com http/https.
+
+6) NEXT_PUBLIC_WHATSAPP_ORGANIZADOR
+- Numero do WhatsApp do organizador para redirecionamento final.
+- Formato recomendado: codigo do pais + DDD + numero.
+- Exemplo: 5511999999999
+
+Observacoes importantes:
+- NUNCA use SUPABASE_SERVICE_ROLE_KEY no frontend.
+- Se alterar variaveis, faca um novo deploy para aplicar as mudancas.
