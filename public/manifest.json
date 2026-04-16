@@ -1,14 +1,15 @@
 {
-  "id": "/",
-  "name": "Estações - Inscricao",
+  "id": "/?source=pwa",
+  "name": "Café & Cura 2026 - Estações",
   "short_name": "Estações",
-  "description": "PWA de inscricao para o evento de igreja Estações.",
+  "description": "Plataforma oficial de inscrição e check-in para o evento Café & Cura 2026.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#F5F5F5",
   "theme_color": "#003366",
-  "orientation": "portrait-primary",
+  "orientation": "portrait",
+  "lang": "pt-BR",
   "icons": [
     {
       "src": "/logo.png",

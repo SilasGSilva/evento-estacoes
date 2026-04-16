@@ -4,6 +4,7 @@ import { CalendarDays, MapPin } from 'lucide-react';
 import { AnimatedSection } from '@/components/animated-section';
 import { Countdown } from '@/components/countdown';
 import { Hero } from '@/components/Hero';
+import { SpeakersGrid } from '@/components/speakers-grid';
 
 export const metadata: Metadata = {
   title: 'ESTAÇÕES | AD Jardim Shangri-la',
@@ -11,23 +12,35 @@ export const metadata: Metadata = {
     'Landing page oficial do evento ESTAÇÕES. Inscrições, convidadas, liderança e informações completas.',
 };
 
+const SPEAKER_BLUR_DATA_URLS = {
+  elisama:
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeDI9IjEiIHkxPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iI2I2ODQ2YSIgb2Zmc2V0PSIwJSIvPjxzdG9wIHN0b3AtY29sb3I9IiNlNmQ1Y2MiIG9mZnNldD0iMTAwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IGZpbGw9InVybCgjZykiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIvPjwvc3ZnPg==",
+  emily:
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeDI9IjEiIHkxPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzYxN2Q5NCIgb2Zmc2V0PSIwJSIvPjxzdG9wIHN0b3AtY29sb3I9IiNiNmM3ZDMiIG9mZnNldD0iMTAwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IGZpbGw9InVybCgjZykiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIvPjwvc3ZnPg==",
+  cristina:
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeDI9IjEiIHkxPSIwIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzQ4NGQ2ZCIgb2Zmc2V0PSIwJSIvPjxzdG9wIHN0b3AtY29sb3I9IiM5YTk3YjUiIG9mZnNldD0iMTAwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IGZpbGw9InVybCgjZykiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIvPjwvc3ZnPg==",
+};
+
 const convidados = [
   {
     nome: 'Elisama Leal',
     papel: 'Palestrante',
     imagem: '/elisama-leal.png',
+    blurDataURL: SPEAKER_BLUR_DATA_URLS.elisama,
     bio: 'Missionária, teóloga, mentora, advogada, escritora e pregadora. Já viajou por diversos países anunciando o Evangelho e, hoje, ministra dentro e fora do Brasil. Fundadora do Café & Cura e da mentoria Mulheres Ungidas, carrega a missão de levantar mulheres curadas na raiz e firmadas em sua identidade como filhas de Deus.',
   },
   {
     nome: 'Emily Leal',
     papel: 'Palestrante',
     imagem: '/emily-leal.png',
+    blurDataURL: SPEAKER_BLUR_DATA_URLS.emily,
     bio: 'Psicóloga, Mestra em Psicologia e MBA em Neurociências. Especialista em Terapia Cognitivo-Comportamental e docente em cursos de Medicina. Com mais de 9 anos de experiência clínica, dedica sua carreira ao estudo profundo da mente e do comportamento humano.',
   },
   {
     nome: 'Cristina Ramos',
     papel: 'Cantora',
     imagem: '/cristina-ramos.png',
+    blurDataURL: SPEAKER_BLUR_DATA_URLS.cristina,
     bio: 'Cantora convidada para conduzir o louvor e ministrar com sensibilidade e excelência neste tempo especial de adoração.',
   },
 ];
@@ -50,7 +63,7 @@ export default function HomePage() {
     <main className="relative overflow-x-hidden bg-transparent text-primary">
       <Hero showSignUpButton={true} />
 
-      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 py-12 sm:px-6 lg:px-8 md:space-y-10 md:py-24">
+      <div className="mx-auto w-full max-w-7xl space-y-8 px-4 pb-8 pt-12 sm:px-6 lg:px-8 md:space-y-10 md:pb-12 md:pt-24">
         <AnimatedSection className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md md:p-8">
           <h2 className="text-2xl font-semibold text-primary md:text-3xl">Sobre o Tema</h2>
           <p className="mt-4 rounded-xl border-l-4 border-secondary bg-secondary/10 p-4 leading-relaxed text-primary/90 shadow-sm">
@@ -63,26 +76,7 @@ export default function HomePage() {
           delay={0.05}
         >
           <h2 className="text-2xl font-semibold md:text-3xl">Convidadas</h2>
-          <div className="mt-6 grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {convidados.map(convidado => (
-              <article
-                key={convidado.nome}
-                className="flex h-full w-full max-w-sm flex-col rounded-2xl border border-accent/60 bg-surface/70 p-4 text-center shadow-sm transition-transform duration-200 hover:-translate-y-1"
-              >
-                <div className="relative mx-auto h-36 w-36 overflow-hidden rounded-full border-4 border-secondary shadow-lg shadow-secondary/30">
-                  <Image
-                    src={convidado.imagem}
-                    alt={convidado.nome}
-                    fill
-                    className="object-cover object-center"
-                  />
-                </div>
-                <p className="mt-4 text-lg font-semibold text-primary">{convidado.nome}</p>
-                <p className="mt-1 text-sm text-primary/75">{convidado.papel}</p>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{convidado.bio}</p>
-              </article>
-            ))}
-          </div>
+          <SpeakersGrid speakers={convidados} />
         </AnimatedSection>
 
         <AnimatedSection
@@ -137,18 +131,6 @@ export default function HomePage() {
         </AnimatedSection>
       </div>
 
-      <footer className="border-t border-accent/70 bg-surface px-4 py-6 text-center text-sm text-primary/80">
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="Logo AD Jardim Shangri-la"
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-full"
-          />
-          <span>Organização: AD Jardim Shangri-la</span>
-        </div>
-      </footer>
     </main>
   );
 }

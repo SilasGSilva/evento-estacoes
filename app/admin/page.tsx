@@ -25,6 +25,8 @@ const METODOS_PAGAMENTO = [
 ] as const;
 
 const FIM_LOTE_1 = new Date(2026, 6, 21, 23, 59, 59, 999);
+const MOBILE_SKELETON_ITEMS = Array.from({ length: 4 }, (_, index) => `mobile-skeleton-${index}`);
+const TABLE_SKELETON_ROWS = Array.from({ length: 6 }, (_, index) => `table-skeleton-${index}`);
 
 function getValorInscricao(createdAt: string) {
   const dataCadastro = new Date(createdAt);
@@ -387,9 +389,80 @@ export default function AdminPage() {
         )}
 
         {loading ? (
-          <section className="rounded-2xl border border-accent/70 bg-surface p-6 text-center shadow-md">
-            Carregando inscritas...
-          </section>
+          <>
+            <section className="space-y-3 md:hidden">
+              {MOBILE_SKELETON_ITEMS.map((itemId) => (
+                <article
+                  key={itemId}
+                  className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md"
+                  aria-hidden="true"
+                >
+                  <div className="h-5 w-2/3 animate-pulse rounded bg-primary/10" />
+                  <div className="mt-2 h-4 w-1/2 animate-pulse rounded bg-primary/10" />
+                  <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-primary/10" />
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="h-6 w-24 animate-pulse rounded-full bg-primary/10" />
+                    <div className="h-6 w-28 animate-pulse rounded-full bg-primary/10" />
+                    <div className="h-6 w-24 animate-pulse rounded-full bg-primary/10" />
+                  </div>
+
+                  <div className="mt-3 grid gap-2">
+                    <div className="h-10 w-full animate-pulse rounded-xl bg-primary/10" />
+                    <div className="h-10 w-full animate-pulse rounded-xl bg-primary/10" />
+                    <div className="h-10 w-full animate-pulse rounded-xl bg-primary/10" />
+                  </div>
+                </article>
+              ))}
+            </section>
+
+            <section className="hidden min-h-[360px] overflow-x-auto rounded-2xl border border-accent/70 bg-surface shadow-md md:block">
+              <table className="w-full min-w-[900px] text-left text-sm">
+                <thead className="bg-primary/5">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Nome</th>
+                    <th className="px-4 py-3 font-semibold">WhatsApp</th>
+                    <th className="px-4 py-3 font-semibold">Email</th>
+                    <th className="px-4 py-3 font-semibold">Pagamento</th>
+                    <th className="px-4 py-3 font-semibold">Método</th>
+                    <th className="px-4 py-3 font-semibold">Check-in</th>
+                    <th className="px-4 py-3 font-semibold">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TABLE_SKELETON_ROWS.map((rowId) => (
+                    <tr key={rowId} className="border-t border-primary/10" aria-hidden="true">
+                      <td className="px-4 py-3">
+                        <div className="h-4 w-40 animate-pulse rounded bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 w-28 animate-pulse rounded bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 w-52 animate-pulse rounded bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-6 w-24 animate-pulse rounded-full bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 w-20 animate-pulse rounded bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="h-4 w-10 animate-pulse rounded bg-primary/10" />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <div className="h-7 w-20 animate-pulse rounded-lg bg-primary/10" />
+                          <div className="h-7 w-16 animate-pulse rounded-lg bg-primary/10" />
+                          <div className="h-7 w-10 animate-pulse rounded-lg bg-primary/10" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </>
         ) : (
           <>
             <section className="space-y-3 md:hidden">

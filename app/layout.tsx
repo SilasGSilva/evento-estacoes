@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import { Analytics } from "@vercel/analytics/react";
 import { PwaManifestDebug } from "@/components/pwa-manifest-debug";
 import { SeasonAtmosphere } from "@/components/season-atmosphere";
@@ -83,9 +84,43 @@ export default function RootLayout({
       <head>
         <meta charSet="UTF-8" />
       </head>
-      <body className="relative flex min-h-full flex-col overflow-x-hidden bg-surface text-primary">
+      <body className="relative flex min-h-screen flex-col overflow-x-hidden bg-surface text-primary">
         <SeasonAtmosphere />
-        <div className="relative z-10 flex min-h-full flex-col">{children}</div>
+        <div className="relative z-10 flex min-h-full flex-1 flex-col">
+          <main className="flex-1">{children}</main>
+          <footer className="mt-4 border-t border-gray-100/10 py-4">
+            <div className="mx-auto flex w-full max-w-full flex-col space-y-3 px-8 text-center sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:text-left lg:px-12">
+              <a
+                href="https://www.instagram.com/adjd.shangrila/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 text-primary/80 transition hover:text-primary hover:underline sm:justify-start"
+              >
+                <Image
+                  src="/logo.png"
+                  alt="Logo AD Jardim Shangri-la"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 max-h-8 rounded-full"
+                />
+                <span className="text-sm">AD Jardim Shangri-la</span>
+              </a>
+
+              <p className="text-xs text-gray-400">
+                Developed by{" "}
+                <a
+                  href="https://www.linkedin.com/in/silas-gomes-21761080/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 transition hover:text-gray-500 hover:underline"
+                >
+                  Silas Gomes
+                </a>
+                {" "} | Frontend Software Engineer
+              </p>
+            </div>
+          </footer>
+        </div>
         <Analytics />
         <WhatsAppSupportFloat />
         {process.env.NODE_ENV === "development" && <PwaManifestDebug />}
