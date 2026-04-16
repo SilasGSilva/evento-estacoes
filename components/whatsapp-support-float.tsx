@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { WhatsAppIcon } from '@/components/whatsapp-icon';
 
 const WHATSAPP_NUMBER = '5511992171188';
@@ -7,7 +8,12 @@ const WHATSAPP_MESSAGE =
   'Olá! Estou com uma dúvida sobre a minha inscrição para o evento ESTAÇÕES 2026.';
 
 export function WhatsAppSupportFloat() {
+  const pathname = usePathname();
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <a
