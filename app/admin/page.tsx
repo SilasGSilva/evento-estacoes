@@ -2,8 +2,9 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import Image from "next/image";
-import { Check, Download, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { Banknote, Check, Download, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
+import { WhatsAppIcon } from "@/components/whatsapp-icon";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
 type Inscrito = {
@@ -17,6 +18,8 @@ type Inscrito = {
   created_at: string;
 };
 
+type FiltroStatus = "TODOS" | "PAGOS" | "PENDENTES";
+
 const METODOS_PAGAMENTO = [
   { value: "pix", label: "Pix" },
   { value: "cartao_credito", label: "Cartão de Crédito" },
@@ -24,13 +27,102 @@ const METODOS_PAGAMENTO = [
   { value: "dinheiro_outro", label: "Dinheiro/Outro" },
 ] as const;
 
+const METODOS_PAGAMENTO_LABELS: Record<string, string> = {
+  pix: "PIX",
+  cartao_credito: "Cart\u00e3o de Cr\u00e9dito",
+  boleto: "Boleto",
+  dinheiro_outro: "Dinheiro/Outro",
+};
+
 const FIM_LOTE_1 = new Date(2026, 6, 21, 23, 59, 59, 999);
+const LINK_COBRANCA_LOTE_1 = "https://pag.ae/81GgRL1zp";
+const LINK_COBRANCA_LOTE_2 = "https://pag.ae/81GgQBdnK";
 const MOBILE_SKELETON_ITEMS = Array.from({ length: 4 }, (_, index) => `mobile-skeleton-${index}`);
 const TABLE_SKELETON_ROWS = Array.from({ length: 6 }, (_, index) => `table-skeleton-${index}`);
+const FILTROS_STATUS: Array<{ value: FiltroStatus; label: string; badgeClassName: string }> = [
+  { value: "TODOS", label: "Todos", badgeClassName: "bg-primary/10 text-primary" },
+  { value: "PAGOS", label: "Pagos", badgeClassName: "bg-green-100 text-green-800" },
+  { value: "PENDENTES", label: "Pendentes", badgeClassName: "bg-amber-100 text-amber-800" },
+];
 
 function getValorInscricao(createdAt: string) {
   const dataCadastro = new Date(createdAt);
   return dataCadastro <= FIM_LOTE_1 ? 65 : 85;
+}
+
+function getLinkCobrancaAtual() {
+  const hoje = new Date();
+  const dataLimite = new Date("2026-07-21T23:59:59");
+  return hoje <= dataLimite ? LINK_COBRANCA_LOTE_1 : LINK_COBRANCA_LOTE_2;
+}
+
+function getAvisoLoteAtual() {
+  const hoje = new Date();
+  const dataLimite = new Date("2026-07-21T23:59:59");
+  return hoje <= dataLimite ? "Lote atual: R$ 65 (at\u00e9 21/07)" : "Lote atual: R$ 85";
+}
+
+function getSaudacaoAtual() {
+  const horaAtual = new Date().getHours();
+
+  if (horaAtual >= 5 && horaAtual < 12) return "Bom dia";
+  if (horaAtual >= 12 && horaAtual < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+function getTelefoneWhatsApp(whatsapp: string) {
+  const telefone = whatsapp.replace(/\D/g, "");
+
+  if ((telefone.length === 10 || telefone.length === 11) && !telefone.startsWith("55")) {
+    return `55${telefone}`;
+  }
+
+  return telefone;
+}
+
+function isPagamentoPendente(statusPagamento: string) {
+  return statusPagamento.trim().toUpperCase() === "PENDENTE";
+}
+
+function isPagamentoPago(statusPagamento: string) {
+  return statusPagamento.trim().toUpperCase() === "PAGO";
+}
+
+function formatMetodoPagamento(metodoPagamento: string | null) {
+  if (!metodoPagamento) return "-";
+
+  const metodoNormalizado = metodoPagamento.trim().toLowerCase();
+  return (
+    METODOS_PAGAMENTO_LABELS[metodoNormalizado] ??
+    metodoNormalizado
+      .split("_")
+      .filter(Boolean)
+      .map((parte) => parte.charAt(0).toUpperCase() + parte.slice(1))
+      .join(" ")
+  );
+}
+
+function formatMoeda(valor: number) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function formatDataCadastro(createdAt: string) {
+  return new Date(createdAt).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
+function getStatusPagamentoLabel(statusPagamento: string) {
+  return isPagamentoPago(statusPagamento) ? "Confirmado" : "Pendente";
+}
+
+function getStatusPagamentoClassName(statusPagamento: string) {
+  return isPagamentoPago(statusPagamento) ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800";
 }
 
 export default function AdminPage() {
@@ -39,6 +131,7 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("TODOS");
   const [inscritos, setInscritos] = useState<Inscrito[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -79,21 +172,33 @@ export default function AdminPage() {
 
   const inscritosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    if (!termo) return inscritos;
 
     return inscritos.filter((inscrito) => {
-      const nomeMatch = inscrito.nome.toLowerCase().includes(termo);
-      const whatsappMatch = inscrito.whatsapp.toLowerCase().includes(termo);
-      return nomeMatch || whatsappMatch;
+      const correspondeBusca =
+        !termo ||
+        inscrito.nome.toLowerCase().includes(termo) ||
+        inscrito.whatsapp.toLowerCase().includes(termo);
+      const correspondeStatus =
+        filtroStatus === "TODOS" ||
+        (filtroStatus === "PAGOS" && isPagamentoPago(inscrito.status_pagamento)) ||
+        (filtroStatus === "PENDENTES" && isPagamentoPendente(inscrito.status_pagamento));
+
+      return correspondeBusca && correspondeStatus;
     });
-  }, [busca, inscritos]);
+  }, [busca, filtroStatus, inscritos]);
 
   const totalInscritos = inscritos.length;
-  const totalPagos = inscritos.filter((item) => item.status_pagamento === "pago").length;
-  const totalPendentes = inscritos.filter((item) => item.status_pagamento !== "pago").length;
+  const totalPagos = inscritos.filter((item) => isPagamentoPago(item.status_pagamento)).length;
+  const totalPendentes = inscritos.filter((item) => isPagamentoPendente(item.status_pagamento)).length;
   const totalArrecadadoConfirmado = inscritos
-    .filter((item) => item.status_pagamento === "pago")
+    .filter((item) => isPagamentoPago(item.status_pagamento))
     .reduce((acc, inscrita) => acc + getValorInscricao(inscrita.created_at), 0);
+  const avisoLoteAtual = getAvisoLoteAtual();
+  const totaisPorFiltro: Record<FiltroStatus, number> = {
+    TODOS: totalInscritos,
+    PAGOS: totalPagos,
+    PENDENTES: totalPendentes,
+  };
 
   const autenticar = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -152,6 +257,22 @@ export default function AdminPage() {
   const abrirConfirmacaoPagamento = (id: string, nome: string) => {
     setConfirmacaoPagamento({ id, nome });
     setMetodoPagamentoSelecionado(METODOS_PAGAMENTO[0].value);
+  };
+
+  const abrirCobrancaWhatsApp = (whatsapp: string) => {
+    const telefone = getTelefoneWhatsApp(whatsapp);
+
+    if (!telefone) {
+      toast.error("WhatsApp invalido para envio da cobranca.");
+      return;
+    }
+
+    const linkDoLote = getLinkCobrancaAtual();
+    const saudacao = getSaudacaoAtual();
+    const mensagem = `Ol\u00e1, paz do Senhor! ${saudacao}, tudo bem? Notamos que sua inscri\u00e7\u00e3o para o Caf\u00e9 & Cura 2026 ainda est\u00e1 aguardando o pagamento. Garanta sua vaga no lote atual atrav\u00e9s deste link: ${linkDoLote}. Assim que concluir, voc\u00ea receber\u00e1 a confirma\u00e7\u00e3o. Se j\u00e1 realizou o pagamento, por favor, nos envie o comprovante por aqui!`;
+    const whatsappUrl = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   const confirmarPagamentoManual = async () => {
@@ -246,7 +367,7 @@ export default function AdminPage() {
       inscrita.whatsapp,
       inscrita.email,
       inscrita.status_pagamento,
-      inscrita.metodo_pagamento ?? "",
+      formatMetodoPagamento(inscrita.metodo_pagamento),
       inscrita.check_in ? "Sim" : "Não",
       new Date(inscrita.created_at).toLocaleString("pt-BR"),
     ]);
@@ -266,7 +387,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-screen overflow-x-hidden bg-transparent px-4 py-12 text-primary sm:px-6 lg:px-8 md:py-20">
+      <main className="min-h-screen max-w-full overflow-x-hidden bg-transparent px-4 py-12 text-primary md:px-8 md:py-20">
         <Toaster richColors position="top-center" />
         <section className="mx-auto w-full max-w-md rounded-2xl border border-accent/70 bg-surface p-6 shadow-md">
           <div className="mb-4 flex justify-center">
@@ -313,7 +434,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-transparent px-4 py-12 text-primary sm:px-6 lg:px-8 md:py-20">
+    <main className="min-h-screen max-w-full overflow-x-hidden bg-transparent px-4 py-12 text-primary md:px-8 md:py-20">
       <Toaster richColors position="top-center" />
       <section className="mx-auto w-full max-w-7xl space-y-6">
         <header className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
@@ -355,7 +476,14 @@ export default function AdminPage() {
         </section>
 
         <section className="rounded-2xl border border-accent/70 bg-secondary/10 p-3 text-sm text-primary/80 shadow-sm">
-          Pendentes no momento: <strong>{totalPendentes}</strong>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Pendentes no momento: <strong>{totalPendentes}</strong>
+            </span>
+            <span className="inline-flex w-fit rounded-full border border-secondary/30 bg-surface px-3 py-1 text-xs font-semibold text-secondary">
+              {avisoLoteAtual}
+            </span>
+          </div>
         </section>
 
         <section className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
@@ -379,6 +507,41 @@ export default function AdminPage() {
               <Download className="h-4 w-4" />
               Exportar CSV
             </button>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div
+              className="grid grid-cols-3 gap-2 overflow-x-auto pb-1 md:flex md:justify-start"
+              role="tablist"
+              aria-label="Filtrar inscritas por status"
+            >
+              {FILTROS_STATUS.map((filtro) => {
+                const filtroAtivo = filtroStatus === filtro.value;
+
+                return (
+                  <button
+                    key={filtro.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={filtroAtivo}
+                    onClick={() => setFiltroStatus(filtro.value)}
+                    className={`inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 py-2 text-sm font-semibold transition sm:gap-2 sm:px-3 ${
+                      filtroAtivo
+                        ? "border-secondary bg-secondary text-surface shadow-md shadow-secondary/20"
+                        : "border-gray-200 bg-gray-50 text-primary hover:border-secondary/60 hover:bg-gray-100"
+                    }`}
+                  >
+                    <span className="truncate">{filtro.label}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${filtro.badgeClassName}`}>
+                      {totaisPorFiltro[filtro.value]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-sm font-medium text-primary/70 md:text-right">
+              Exibindo <strong>{inscritosFiltrados.length}</strong> de <strong>{totalInscritos}</strong>
+            </span>
           </div>
         </section>
 
@@ -416,41 +579,42 @@ export default function AdminPage() {
               ))}
             </section>
 
-            <section className="hidden min-h-[360px] overflow-x-auto rounded-2xl border border-accent/70 bg-surface shadow-md md:block">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead className="bg-primary/5">
+            <section className="hidden min-h-[360px] max-w-full bg-surface md:block">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-primary/5">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Nome</th>
-                    <th className="px-4 py-3 font-semibold">WhatsApp</th>
-                    <th className="px-4 py-3 font-semibold">Email</th>
-                    <th className="px-4 py-3 font-semibold">Pagamento</th>
-                    <th className="px-4 py-3 font-semibold">Método</th>
-                    <th className="px-4 py-3 font-semibold">Check-in</th>
-                    <th className="px-4 py-3 font-semibold">Ações</th>
+                    <th className="min-w-[150px] whitespace-nowrap px-4 py-3 font-semibold">Nome</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">WhatsApp</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Email</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Pagamento</th>
+                    <th className="min-w-[150px] whitespace-nowrap px-4 py-3 font-semibold">Método</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Check-in</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {TABLE_SKELETON_ROWS.map((rowId) => (
                     <tr key={rowId} className="border-t border-primary/10" aria-hidden="true">
-                      <td className="px-4 py-3">
+                      <td className="min-w-[150px] whitespace-nowrap px-4 py-3">
                         <div className="h-4 w-40 animate-pulse rounded bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="h-4 w-28 animate-pulse rounded bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="h-4 w-52 animate-pulse rounded bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="h-6 w-24 animate-pulse rounded-full bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="min-w-[150px] whitespace-nowrap px-4 py-3">
                         <div className="h-4 w-20 animate-pulse rounded bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="h-4 w-10 animate-pulse rounded bg-primary/10" />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="flex gap-2">
                           <div className="h-7 w-20 animate-pulse rounded-lg bg-primary/10" />
                           <div className="h-7 w-16 animate-pulse rounded-lg bg-primary/10" />
@@ -460,69 +624,107 @@ export default function AdminPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </section>
           </>
         ) : (
           <>
-            <section className="space-y-3 md:hidden">
+            <section className="space-y-4 md:hidden">
               {inscritosFiltrados.length === 0 ? (
                 <article className="rounded-2xl border border-accent/70 bg-surface p-4 text-sm text-primary/70 shadow-md">
                   Nenhuma inscrita encontrada.
                 </article>
               ) : (
                 inscritosFiltrados.map((inscrito) => (
-                  <article key={inscrito.id} className="rounded-2xl border border-accent/70 bg-surface p-4 shadow-md">
-                    <p className="font-semibold">{inscrito.nome}</p>
-                    <p className="text-sm text-primary/75">{inscrito.whatsapp}</p>
-                    <p className="text-sm text-primary/75">{inscrito.email}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  <article key={inscrito.id} className="rounded-xl border border-accent/70 bg-surface p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{inscrito.nome}</p>
+                        <p className="mt-1 text-sm text-primary/70">{inscrito.whatsapp}</p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getStatusPagamentoClassName(
+                          inscrito.status_pagamento,
+                        )}`}
+                      >
+                        {getStatusPagamentoLabel(inscrito.status_pagamento)}
+                      </span>
+                    </div>
+                    <div className="hidden">
                       <span className="rounded-full bg-primary/10 px-2 py-1">
                         {inscrito.status_pagamento}
                       </span>
                       <span className="rounded-full bg-secondary/20 px-2 py-1">
-                        {inscrito.metodo_pagamento ?? "sem método"}
+                        {formatMetodoPagamento(inscrito.metodo_pagamento) === "-"
+                          ? "sem método"
+                          : formatMetodoPagamento(inscrito.metodo_pagamento)}
                       </span>
                       <span className="rounded-full bg-primary/10 px-2 py-1">
                         Check-in: {inscrito.check_in ? "sim" : "não"}
                       </span>
                     </div>
-                    <div className="mt-3 grid gap-2">
-                      {inscrito.status_pagamento !== "pago" ? (
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs font-medium text-primary/55">M&eacute;todo</p>
+                        <p className="mt-1 font-medium">{formatMetodoPagamento(inscrito.metodo_pagamento)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-primary/55">Valor</p>
+                        <p className="mt-1 font-medium">{formatMoeda(getValorInscricao(inscrito.created_at))}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-primary/55">Data</p>
+                        <p className="mt-1 font-medium">{formatDataCadastro(inscrito.created_at)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-primary/55">Check-in</p>
+                        <p className="mt-1 font-medium">{inscrito.check_in ? "Sim" : "N\u00e3o"}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-3">
+                      {isPagamentoPendente(inscrito.status_pagamento) && (
                         <button
                           type="button"
+                          aria-label={`Cobrar ${inscrito.nome} no WhatsApp`}
+                          onClick={() => abrirCobrancaWhatsApp(inscrito.whatsapp)}
+                          className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#25D366]/40 bg-[#25D366]/15 text-[#25D366] transition hover:bg-[#25D366]/25"
+                        >
+                          <WhatsAppIcon className="h-7 w-7" />
+                        </button>
+                      )}
+                      {!isPagamentoPago(inscrito.status_pagamento) && (
+                        <button
+                          type="button"
+                          aria-label={`Confirmar pagamento de ${inscrito.nome}`}
                           disabled={actionLoadingId === inscrito.id}
                           onClick={() => abrirConfirmacaoPagamento(inscrito.id, inscrito.nome)}
-                          className="flex items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-60"
+                          className="flex h-11 w-11 items-center justify-center rounded-xl border border-green-300 bg-green-50 text-green-800 transition hover:bg-green-100 disabled:opacity-60"
                         >
-                          <Check className="h-4 w-4" />
-                          Confirmar Pagamento
+                          <Banknote className="h-5 w-5" />
                         </button>
-                      ) : (
-                        <span className="rounded-xl border border-green-300 bg-green-50 px-3 py-2 text-center text-sm font-medium text-green-800">
-                          Pagamento Confirmado
-                        </span>
                       )}
                       <button
                         type="button"
+                        aria-label={`Confirmar check-in de ${inscrito.nome}`}
                         disabled={actionLoadingId === inscrito.id || inscrito.check_in}
                         onClick={() =>
                           void atualizarInscrito(inscrito.id, {
                             check_in: true,
                           })
                         }
-                        className="rounded-xl border border-accent/70 bg-surface px-3 py-2 text-sm font-medium transition hover:border-primary disabled:opacity-60"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-accent/70 bg-surface text-primary transition hover:border-primary disabled:opacity-60"
                       >
-                        Check-in
+                        <Check className="h-5 w-5" />
                       </button>
                       <button
                         type="button"
+                        aria-label={`Excluir ${inscrito.nome}`}
                         disabled={actionLoadingId === inscrito.id}
                         onClick={() => void excluirInscrita(inscrito.id, inscrito.nome)}
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-red-300 bg-red-50 text-red-700 transition hover:bg-red-100 disabled:opacity-60"
                       >
-                        <Trash2 className="h-4 w-4" />
-                        Excluir
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   </article>
@@ -530,77 +732,96 @@ export default function AdminPage() {
               )}
             </section>
 
-            <section className="hidden overflow-x-auto rounded-2xl border border-accent/70 bg-surface shadow-md md:block">
-              <table className="w-full min-w-[900px] text-left text-sm">
-                <thead className="bg-primary/5">
+            <section className="hidden max-w-full bg-surface md:block">
+              <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <table className="w-full min-w-[980px] text-left text-sm">
+                <thead className="sticky top-0 z-10 bg-primary/5">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Nome</th>
-                    <th className="px-4 py-3 font-semibold">WhatsApp</th>
-                    <th className="px-4 py-3 font-semibold">Email</th>
-                    <th className="px-4 py-3 font-semibold">Pagamento</th>
-                    <th className="px-4 py-3 font-semibold">Método</th>
-                    <th className="px-4 py-3 font-semibold">Check-in</th>
-                    <th className="px-4 py-3 font-semibold">Ações</th>
+                    <th className="min-w-[150px] whitespace-nowrap px-4 py-3 font-semibold">Nome</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">WhatsApp</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Email</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Pagamento</th>
+                    <th className="min-w-[150px] whitespace-nowrap px-4 py-3 font-semibold">Método</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Check-in</th>
+                    <th className="whitespace-nowrap px-4 py-3 font-semibold">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {inscritosFiltrados.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-4 text-center text-primary/70">
+                      <td colSpan={7} className="whitespace-nowrap px-4 py-4 text-center text-primary/70">
                         Nenhuma inscrita encontrada.
                       </td>
                     </tr>
                   ) : (
                     inscritosFiltrados.map((inscrito) => (
                       <tr key={inscrito.id} className="border-t border-primary/10">
-                        <td className="px-4 py-3">{inscrito.nome}</td>
-                        <td className="px-4 py-3">{inscrito.whatsapp}</td>
-                        <td className="px-4 py-3">{inscrito.email}</td>
-                        <td className="px-4 py-3">
+                        <td className="min-w-[150px] whitespace-nowrap px-4 py-3">{inscrito.nome}</td>
+                        <td className="whitespace-nowrap px-4 py-3">{inscrito.whatsapp}</td>
+                        <td className="whitespace-nowrap px-4 py-3">{inscrito.email}</td>
+                        <td className="whitespace-nowrap px-4 py-3">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              inscrito.status_pagamento === "pago"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-amber-100 text-amber-800"
-                            }`}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusPagamentoClassName(
+                              inscrito.status_pagamento,
+                            )}`}
                           >
-                            {inscrito.status_pagamento === "pago" ? "Confirmado" : "Pendente"}
+                            {getStatusPagamentoLabel(inscrito.status_pagamento)}
                           </span>
                         </td>
-                        <td className="px-4 py-3">{inscrito.metodo_pagamento ?? "-"}</td>
-                        <td className="px-4 py-3">{inscrito.check_in ? "Sim" : "Não"}</td>
-                        <td className="px-4 py-3">
+                        <td className="min-w-[150px] whitespace-nowrap px-4 py-3">
+                          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary/80">
+                            {formatMetodoPagamento(inscrito.metodo_pagamento)}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3">{inscrito.check_in ? "Sim" : "Não"}</td>
+                        <td className="whitespace-nowrap px-4 py-3">
                           <div className="flex gap-2">
-                            {inscrito.status_pagamento !== "pago" && (
+                            {isPagamentoPendente(inscrito.status_pagamento) && (
                               <button
                                 type="button"
+                                aria-label={`Cobrar ${inscrito.nome} no WhatsApp`}
+                                title="Cobrar no WhatsApp"
+                                onClick={() => abrirCobrancaWhatsApp(inscrito.whatsapp)}
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366] transition hover:bg-[#25D366]/20"
+                              >
+                                <WhatsAppIcon className="h-4 w-4" />
+                              </button>
+                            )}
+                            {!isPagamentoPago(inscrito.status_pagamento) && (
+                              <button
+                                type="button"
+                                aria-label={`Confirmar pagamento de ${inscrito.nome}`}
+                                title="Confirmar pagamento"
                                 disabled={actionLoadingId === inscrito.id}
                                 onClick={() => abrirConfirmacaoPagamento(inscrito.id, inscrito.nome)}
-                                className="flex items-center gap-1 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-medium text-green-800 transition hover:bg-green-100 disabled:opacity-60"
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border border-green-300 bg-green-50 text-green-800 transition hover:bg-green-100 disabled:opacity-60"
                               >
-                                <Check className="h-3.5 w-3.5" />
-                                Confirmar
+                                <Banknote className="h-4 w-4" />
                               </button>
                             )}
                             <button
                               type="button"
+                              aria-label={`Confirmar check-in de ${inscrito.nome}`}
+                              title="Confirmar check-in"
                               disabled={actionLoadingId === inscrito.id || inscrito.check_in}
                               onClick={() =>
                                 void atualizarInscrito(inscrito.id, {
                                   check_in: true,
                                 })
                               }
-                              className="rounded-lg border border-accent/70 bg-surface px-3 py-1.5 text-xs font-medium transition hover:border-primary disabled:opacity-60"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent/70 bg-surface text-primary transition hover:border-primary disabled:opacity-60"
                             >
-                              Check-in
+                              <Check className="h-4 w-4" />
                             </button>
                             <button
                               type="button"
+                              aria-label={`Excluir ${inscrito.nome}`}
+                              title="Excluir"
                               disabled={actionLoadingId === inscrito.id}
                               onClick={() => void excluirInscrita(inscrito.id, inscrito.nome)}
-                              className="rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-60"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-red-300 bg-red-50 text-red-700 transition hover:bg-red-100 disabled:opacity-60"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -608,7 +829,8 @@ export default function AdminPage() {
                     ))
                   )}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </section>
           </>
         )}
