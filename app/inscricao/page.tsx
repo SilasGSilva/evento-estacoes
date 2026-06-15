@@ -14,7 +14,10 @@ import { WhatsAppIcon } from '@/components/whatsapp-icon';
 import { isSupabaseConfigured, supabase } from '@/lib/supabaseClient';
 
 const inscricaoSchema = z.object({
-  nome: z.string().min(3, 'Informe o nome completo.'),
+  nome: z
+    .string()
+    .min(3, 'Informe o nome completo.')
+    .refine(v => v.trim().split(/\s+/).length >= 2, 'Informe o nome completo.'),
   whatsapp: z
     .string()
     .min(14, 'Informe um WhatsApp valido.')
@@ -154,7 +157,7 @@ export default function InscricaoPage() {
         <AnimatedSection className="rounded-3xl border border-accent/70 bg-surface p-6 shadow-md">
           <h2 className="text-center text-xl font-semibold text-primary">Convidadas</h2>
           <div className="mt-5 grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {CONVIDADAS.map((convidada) => (
+            {CONVIDADAS.map(convidada => (
               <article
                 key={convidada.nome}
                 className="flex h-full w-full max-w-sm flex-col rounded-2xl border border-accent/60 bg-surface/70 p-4 text-center shadow-sm transition-transform duration-200 hover:-translate-y-1"
@@ -169,7 +172,9 @@ export default function InscricaoPage() {
                 </div>
                 <p className="mt-3 text-sm font-semibold">{convidada.nome}</p>
                 <p className="text-xs text-primary/75">{convidada.papel}</p>
-                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">{convidada.bio}</p>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-600">
+                  {convidada.bio}
+                </p>
               </article>
             ))}
           </div>
@@ -177,13 +182,15 @@ export default function InscricaoPage() {
           <div className="mt-6 space-y-3 rounded-2xl bg-surface p-4">
             <div className="flex items-center gap-3 text-sm">
               <CalendarDays className="h-5 w-5 text-secondary" />
-              <span>21/08/2026 - 18h</span>
+              <span>21/08/2026 - 19h</span>
             </div>
             <div className="flex items-start gap-3 text-sm">
               <MapPin className="mt-0.5 h-5 w-5 text-secondary" />
               <div className="space-y-1">
                 <p className="font-semibold text-primary">Espaço Merengue</p>
-                <p className="text-primary/80">Av. Pinheirinho D&apos;Água, 200 - Jd. Panamericano</p>
+                <p className="text-primary/80">
+                  Av. Pinheirinho D&apos;Água, 200 - Jd. Panamericano
+                </p>
                 <a
                   href={MAPS_LINK}
                   target="_blank"
@@ -227,7 +234,10 @@ export default function InscricaoPage() {
               </div>
 
               <div>
-                <label htmlFor="whatsapp" className="mb-1 flex items-center gap-1 text-sm font-medium text-primary">
+                <label
+                  htmlFor="whatsapp"
+                  className="mb-1 flex items-center gap-1 text-sm font-medium text-primary"
+                >
                   <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                   WhatsApp
                 </label>

@@ -1,21 +1,29 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
 
-const EVENT_TITLE = "Estações 2026 - Café & Cura";
-const EVENT_LOCATION = "Espaço Merengue - Av. Pinheirinho D'Agua, 200 - Jd. Panamericano, São Paulo - SP";
+const EVENT_TITLE = 'Estações 2026 - Café & Cura';
+const EVENT_LOCATION =
+  "Espaço Merengue - Av. Pinheirinho D'Agua, 200 - Jd. Panamericano, São Paulo - SP";
 const EVENT_DESCRIPTION =
-  "Evento Estações 2026 da AD Jardim Shangri-la. Leve seu comprovante e participe deste tempo especial.";
+  'Evento Estações 2026 da AD Jardim Shangri-la. Leve seu comprovante e participe deste tempo especial.';
 
-const EVENT_START = new Date("2026-08-21T18:00:00-03:00");
-const EVENT_END = new Date("2026-08-21T21:00:00-03:00");
+const EVENT_START = new Date('2026-08-21T19:00:00-03:00');
+const EVENT_END = new Date('2026-08-21T21:00:00-03:00');
 
 function formatUtcForCalendar(date: Date) {
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  return date
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
 }
 
 function escapeIcsText(text: string) {
-  return text.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
 }
 
 function buildIcsEvent() {
@@ -25,12 +33,12 @@ function buildIcsEvent() {
   const uid = `estacoes-2026-${Date.now()}@adjardimshangrila`;
 
   return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//AD Jardim Shangri-la//Estações 2026//PT-BR",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//AD Jardim Shangri-la//Estações 2026//PT-BR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
@@ -38,19 +46,19 @@ function buildIcsEvent() {
     `SUMMARY:${escapeIcsText(EVENT_TITLE)}`,
     `DESCRIPTION:${escapeIcsText(EVENT_DESCRIPTION)}`,
     `LOCATION:${escapeIcsText(EVENT_LOCATION)}`,
-    "BEGIN:VALARM",
-    "TRIGGER:-P1D",
-    "ACTION:DISPLAY",
-    "DESCRIPTION:Lembrete: Estações 2026 - Café & Cura é amanhã.",
-    "END:VALARM",
-    "BEGIN:VALARM",
-    "TRIGGER:-PT15M",
-    "ACTION:DISPLAY",
-    "DESCRIPTION:Lembrete: Estações 2026 começa em 15 minutos.",
-    "END:VALARM",
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
+    'BEGIN:VALARM',
+    'TRIGGER:-P1D',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Lembrete: Estações 2026 - Café & Cura é amanhã.',
+    'END:VALARM',
+    'BEGIN:VALARM',
+    'TRIGGER:-PT15M',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:Lembrete: Estações 2026 começa em 15 minutos.',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
 }
 
 export function AddToAgenda() {
@@ -60,7 +68,7 @@ export function AddToAgenda() {
     const start = formatUtcForCalendar(EVENT_START);
     const end = formatUtcForCalendar(EVENT_END);
     const params = new URLSearchParams({
-      action: "TEMPLATE",
+      action: 'TEMPLATE',
       text: EVENT_TITLE,
       dates: `${start}/${end}`,
       details: EVENT_DESCRIPTION,
@@ -72,11 +80,11 @@ export function AddToAgenda() {
 
   const handleDownloadIcs = () => {
     const icsContent = buildIcsEvent();
-    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
-    link.download = "estacoes-2026.ics";
+    link.download = 'estacoes-2026.ics';
     link.click();
     URL.revokeObjectURL(url);
     setOpen(false);
@@ -86,7 +94,7 @@ export function AddToAgenda() {
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => setOpen(prev => !prev)}
         className="w-full rounded-full border border-accent/70 bg-surface px-5 py-3 text-sm font-semibold text-primary shadow-sm transition hover:border-secondary/60 hover:bg-secondary/10"
       >
         📅 Adicionar à Minha Agenda
