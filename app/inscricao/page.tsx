@@ -120,6 +120,27 @@ export default function InscricaoPage() {
 
     setSalvando(true);
 
+    // Verificar se pessoa com mesmo nome e telefone já existe
+    const { data: existente, error: erroVerificacao } = await supabase
+      .from('inscritos')
+      .select('id,nome')
+      .eq('nome', data.nome)
+      .eq('whatsapp', data.whatsapp)
+      .single();
+
+    if (existente) {
+      setSalvando(false);
+      setErroEnvio('Uma pessoa com este nome e telefone já foi cadastrada.');
+      return;
+    }
+
+    // Se houve erro mas não foi "no rows", é um erro real
+    if (erroVerificacao && erroVerificacao.code !== 'PGRST116') {
+      setSalvando(false);
+      setErroEnvio('Houve um erro ao verificar seus dados. Tente novamente.');
+      return;
+    }
+
     const { data: inscrita, error } = await supabase
       .from('inscritos')
       .insert({
